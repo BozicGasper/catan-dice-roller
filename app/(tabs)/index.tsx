@@ -86,6 +86,7 @@ export default function DiceScreen() {
     toggleThirdDice,
     alchemist,
     setAlchemistValues: setStoreAlchemistValues,
+    rollHistory,
   } = useGameStore();
 
   const { isDark, toggleTheme, colors } = useThemeStore();
@@ -182,6 +183,16 @@ export default function DiceScreen() {
     thirdDiceEnabled && diceValues[2] <= 3
       ? getCityDiceColor(diceValues[2])
       : null;
+
+  const handleUndoLastRoll = () => {
+    undoLastRoll();
+    // Get the last roll from the updated history
+    const lastRoll = { ...rollHistory[1] ?? undefined };
+    console.log('lastRoll', lastRoll?.values);
+    if (lastRoll) {
+      setDiceValues(lastRoll.values);
+    }
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -575,7 +586,7 @@ export default function DiceScreen() {
               <Text style={styles.buttonText}>Roll Dice</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.undoButton} onPress={undoLastRoll}>
+            <TouchableOpacity style={styles.undoButton} onPress={handleUndoLastRoll}>
               <RotateCcw size={24} color={colors.subtext} />
               <Text style={styles.undoButtonText}>Undo Last Roll</Text>
             </TouchableOpacity>
