@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -9,35 +10,43 @@ interface MiniDiceProps {
   muted?: boolean;
 }
 
-export function MiniDice({ value, size = 32, isSelected = false, color = '#6366f1', muted = false }: MiniDiceProps) {
-  const getDots = () => {
-    const dots = [];
+// Standard dice dot positions (in percentages)
+const getDotPositions = (value: number): [number, number][] => {
+  const positions: Record<number, [number, number][]> = {
+    1: [[50, 50]], // Center
+    2: [[25, 25], [75, 75]], // Top-left to bottom-right
+    3: [[25, 25], [50, 50], [75, 75]], // Diagonal with center
+    4: [[25, 25], [25, 75], [75, 25], [75, 75]], // Four corners
+    5: [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]], // Four corners + center
+    6: [[25, 25], [25, 50], [25, 75], [75, 25], [75, 50], [75, 75]], // Three on each side
+  };
+  return positions[value] || [];
+};
+
+function MiniDiceComponent({ value, size = 32, isSelected = false, color = '#6366f1', muted = false }: MiniDiceProps) {
+  const dots = useMemo(() => {
     const dotSize = size / 8;
     const positions = getDotPositions(value);
 
-    for (let i = 0; i < positions.length; i++) {
-      const [x, y] = positions[i];
-      dots.push(
-        <View
-          key={i}
-          style={[
-            styles.dot,
-            {
-              position: 'absolute',
-              width: dotSize,
-              height: dotSize,
-              backgroundColor: 'white',
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: [{ translateX: -dotSize / 2 }, { translateY: -dotSize / 2 }],
-              opacity: muted ? 0.5 : 1,
-            }
-          ]}
-        />
-      );
-    }
-    return dots;
-  };
+    return positions.map(([x, y], i) => (
+      <View
+        key={i}
+        style={[
+          styles.dot,
+          {
+            position: 'absolute',
+            width: dotSize,
+            height: dotSize,
+            backgroundColor: 'white',
+            left: `${x}%`,
+            top: `${y}%`,
+            transform: [{ translateX: -dotSize / 2 }, { translateY: -dotSize / 2 }],
+            opacity: muted ? 0.5 : 1,
+          }
+        ]}
+      />
+    ));
+  }, [value, size, muted]);
 
   return (
     <View
@@ -58,7 +67,7 @@ export function MiniDice({ value, size = 32, isSelected = false, color = '#6366f
           { borderRadius: size / 8 },
           isSelected && styles.selected
         ]}>
-        {getDots()}
+        {dots}
       </LinearGradient>
     </View>
   );
@@ -88,15 +97,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Standard dice dot positions (in percentages)
-const getDotPositions = (value: number): [number, number][] => {
-  const positions: Record<number, [number, number][]> = {
-    1: [[50, 50]], // Center
-    2: [[25, 25], [75, 75]], // Top-left to bottom-right
-    3: [[25, 25], [50, 50], [75, 75]], // Diagonal with center
-    4: [[25, 25], [25, 75], [75, 25], [75, 75]], // Four corners
-    5: [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]], // Four corners + center
-    6: [[25, 25], [25, 50], [25, 75], [75, 25], [75, 50], [75, 75]], // Three on each side
-  };
-  return positions[value] || [];
-};
+export const MiniDice = React.memo(MiniDiceComponent);

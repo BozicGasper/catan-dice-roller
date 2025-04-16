@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
 
@@ -7,14 +8,14 @@ interface HistogramChartProps {
   height?: number;
 }
 
-export function HistogramChart({ data, maxValue, height = 200 }: HistogramChartProps) {
+function HistogramChartComponent({ data, maxValue, height = 200 }: HistogramChartProps) {
   const { colors } = useThemeStore();
   
   const getBarHeight = (value: number) => {
     return maxValue > 0 ? (value / maxValue) * height : 0;
   };
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       padding: 16,
       backgroundColor: colors.surface,
@@ -47,19 +48,25 @@ export function HistogramChart({ data, maxValue, height = 200 }: HistogramChartP
       fontSize: 10,
       color: colors.subtext,
     },
-  });
+  }), [colors]);
+
+  const bars = useMemo(() => {
+    return data.map((value, index) => (
+      <View key={index} style={styles.barContainer}>
+        <View style={[styles.bar, { height: getBarHeight(value) }]} />
+        <Text style={styles.label}>{index + 2}</Text>
+        <Text style={styles.value}>{value}</Text>
+      </View>
+    ));
+  }, [data, maxValue, styles]);
 
   return (
     <View style={styles.container}>
       <View style={styles.chart}>
-        {data.map((value, index) => (
-          <View key={index} style={styles.barContainer}>
-            <View style={[styles.bar, { height: getBarHeight(value) }]} />
-            <Text style={styles.label}>{index + 2}</Text>
-            <Text style={styles.value}>{value}</Text>
-          </View>
-        ))}
+        {bars}
       </View>
     </View>
   );
 }
+
+export const HistogramChart = React.memo(HistogramChartComponent);

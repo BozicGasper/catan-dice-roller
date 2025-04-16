@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ship } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,18 +8,18 @@ interface PirateProgressProps {
   progress: number;
 }
 
-export function PirateProgress({ progress }: PirateProgressProps) {
+function PirateProgressComponent({ progress }: PirateProgressProps) {
   const { colors } = useThemeStore();
 
   // Calculate colors based on progress
-  const getProgressColors = (progress: number) => {
-    if (progress < 25) return ['#22c55e', '#4ade80']; // Green
-    if (progress < 50) return ['#eab308', '#facc15']; // Yellow
-    if (progress < 75) return ['#f97316', '#fb923c']; // Orange
-    return ['#dc2626', '#ef4444']; // Red
-  };
+  const progressColors = useMemo(() => {
+    if (progress < 25) return ['#22c55e', '#4ade80'] as const; // Green
+    if (progress < 50) return ['#eab308', '#facc15'] as const; // Yellow
+    if (progress < 75) return ['#f97316', '#fb923c'] as const; // Orange
+    return ['#dc2626', '#ef4444'] as const; // Red
+  }, [progress]);
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       backgroundColor: colors.surface,
       padding: 16,
@@ -52,7 +53,11 @@ export function PirateProgress({ progress }: PirateProgressProps) {
       color: colors.subtext,
       textAlign: 'center',
     },
-  });
+  }), [colors]);
+
+  const progressText = useMemo(() => {
+    return `${Math.round(progress)}% (${Math.floor(progress / 12.5)}/8)`;
+  }, [progress]);
 
   return (
     <View style={styles.container}>
@@ -62,15 +67,17 @@ export function PirateProgress({ progress }: PirateProgressProps) {
       </View>
       <View style={styles.progressContainer}>
         <LinearGradient
-          colors={getProgressColors(progress)}
+          colors={progressColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.progressBar, { width: `${progress}%` }]}
         />
       </View>
       <Text style={styles.progressText}>
-        {Math.round(progress)}% ({Math.floor(progress / 12.5)}/8)
+        {progressText}
       </Text>
     </View>
   );
 }
+
+export const PirateProgress = React.memo(PirateProgressComponent);

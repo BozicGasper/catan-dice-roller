@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -35,33 +35,27 @@ export default function DiceScreen() {
   const [playerInput, setPlayerInput] = useState('');
   const [players, setPlayers] = useState<string[]>([]);
   const [citiesAndKnightsEnabled, setCitiesAndKnightsEnabled] = useState(false);
-  const [alchemistValues, setAlchemistValues] = useState<[number, number]>([
-    1, 1,
-  ]);
+  const [alchemistValues, setAlchemistValues] = useState<[number, number]>([1, 1]);
   const [highlightSecondDice, setHighlightSecondDice] = useState(false);
-
   const [sound, setSound] = useState<Audio.Sound | null>(null);
 
-  async function playAlchemistSound() {
-    const { sound } = await Audio.Sound.createAsync(alchemistSound);
+  const playSound = useCallback(async (soundFile: any) => {
+    const { sound } = await Audio.Sound.createAsync(soundFile);
     setSound(sound);
-
     await sound.playAsync();
-  }
+  }, []);
 
-  async function playLockSound() {
-    const { sound } = await Audio.Sound.createAsync(lockPickSound);
-    setSound(sound);
+  const playAlchemistSound = useCallback(async () => {
+    await playSound(alchemistSound);
+  }, [playSound]);
 
-    await sound.playAsync();
-  }
+  const playLockSound = useCallback(async () => {
+    await playSound(lockPickSound);
+  }, [playSound]);
 
-  async function playPirateAttackSound() {
-    const { sound } = await Audio.Sound.createAsync(pirateSound);
-    setSound(sound);
-
-    await sound.playAsync();
-  }
+  const playPirateAttackSound = useCallback(async () => {
+    await playSound(pirateSound);
+  }, [playSound]);
 
   useEffect(() => {
     return sound
@@ -91,18 +85,18 @@ export default function DiceScreen() {
 
   const { isDark, toggleTheme, colors } = useThemeStore();
 
-  const handleStartNewGame = () => {
+  const handleStartNewGame = useCallback(() => {
     setShowNewGameDialog(true);
-  };
+  }, []);
 
-  const handleAddPlayer = () => {
+  const handleAddPlayer = useCallback(() => {
     if (playerInput.trim()) {
-      setPlayers([...players, playerInput.trim()]);
+      setPlayers((prev) => [...prev, playerInput.trim()]);
       setPlayerInput('');
     }
-  };
+  }, [playerInput]);
 
-  const handleStartGame = () => {
+  const handleStartGame = useCallback(() => {
     if (players.length === 0) {
       Alert.alert('Error', 'Please add at least one player');
       return;
@@ -113,24 +107,14 @@ export default function DiceScreen() {
     startNewGame(players);
     setShowNewGameDialog(false);
     setPlayers([]);
-  };
+  }, [players, citiesAndKnightsEnabled, toggleThirdDice, startNewGame]);
 
-  const handleAlchemistConfirm = () => {
+  const handleAlchemistConfirm = useCallback(() => {
     setStoreAlchemistValues(alchemistValues, highlightSecondDice);
     setShowAlchemistDialog(false);
+  }, [alchemistValues, highlightSecondDice, setStoreAlchemistValues]);
 
-  };
-
-  const rollDice = () => {
-    if (!currentGame) {
-      handleStartNewGame();
-      return;
-    }
-
-    performRoll();
-  };
-
-  const performRoll = async () => {
+  const performRoll = useCallback(async () => {
     if (gamePlayers.length === 0) {
       Alert.alert(
         'No Players',
@@ -158,7 +142,6 @@ export default function DiceScreen() {
       const newPirateCount = pirateCount + 1;
       if (newPirateCount === 8) {
         await playPirateAttackSound();
-
         Alert.alert(
           'Pirates Attack!',
           'The pirates are attacking! (8 black dice rolls reached)'
@@ -169,32 +152,40 @@ export default function DiceScreen() {
     setDiceValues(newValues);
 
     if (isRobberEvent(newValues)) {
-      // Alert.alert('Robber Event!', 'The robber has been activated! (Sum is 7)');
       playLockSound();
     }
 
     addRoll(newValues);
     nextTurn();
-  };
+  }, [
+    gamePlayers.length,
+    alchemist,
+    thirdDiceEnabled,
+    pirateCount,
+    playAlchemistSound,
+    playPirateAttackSound,
+    playLockSound,
+    addRoll,
+    nextTurn,
+  ]);
 
-  const currentPlayer = gamePlayers[currentPlayerIndex]?.name || 'Unknown';
-  const pirateProgress = getPirateProgress();
-  const cityDiceColor =
-    thirdDiceEnabled && diceValues[2] <= 3
-      ? getCityDiceColor(diceValues[2])
-      : null;
+  const rollDice = useCallback(() => {
+    if (!currentGame) {
+      handleStartNewGame();
+      return;
+    }
+    performRoll();
+  }, [currentGame, handleStartNewGame, performRoll]);
 
-  const handleUndoLastRoll = () => {
+  const handleUndoLastRoll = useCallback(() => {
     undoLastRoll();
-    // Get the last roll from the updated history
     const lastRoll = { ...rollHistory[1] ?? undefined };
-    console.log('lastRoll', lastRoll?.values);
     if (lastRoll) {
       setDiceValues(lastRoll.values);
     }
-  };
+  }, [undoLastRoll, rollHistory]);
 
-  const styles = StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
@@ -394,7 +385,14 @@ export default function DiceScreen() {
       fontSize: 16,
       fontWeight: '600',
     },
-  });
+  }), [colors, insets]);
+
+  const currentPlayer = gamePlayers[currentPlayerIndex]?.name || 'Unknown';
+  const pirateProgress = getPirateProgress();
+  const cityDiceColor =
+    thirdDiceEnabled && diceValues[2] <= 3
+      ? getCityDiceColor(diceValues[2])
+      : null;
 
   if (showNewGameDialog) {
     return (
