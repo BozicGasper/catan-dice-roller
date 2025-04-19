@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "catan-dice-roller",
+    "slug": "catan-dice-roller",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gasperbozic.bolt-expo-nativewind"
+      "bundleIdentifier": "com.gasperbozic.catan-dice-roller"
     },
     "web": {
       "bundler": "metro",
@@ -23,6 +23,17 @@
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
+    },
+    "android": {
+      "package": "com.gasperbozic.boltexponativewind"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "bb75a66e-0791-483f-be98-fcaf92a49b76"
+      }
     }
   }
 }
